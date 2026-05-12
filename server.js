@@ -1,179 +1,303 @@
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const rooms = {}; // Store room codes and players
+const rooms = {};
 
-// Serve static files from the "public" directory
-app.use(express.static('public'));
-
-// Serve a simple response for the root URL
-app.get('/', (req, res) => {
-    res.send('Welcome to ArtArena! The server is running.');
-});
-
-// Handle socket connections
-io.on('connection', (socket) => {
-    console.log(`[${new Date().toISOString()}] A user connected: ${socket.id}`);
-
-    // Handle room creation
-    socket.on('createRoom', () => {
-        const roomCode = generateRoomCode();
-        rooms[roomCode] = { players: [], createdAt: Date.now(), currentWord: null }; // Add a timestamp and word for the room
-        socket.join(roomCode);
-        rooms[roomCode].players.push({ id: socket.id, name: 'Creator', character: null }); // Placeholder for creator
-        socket.emit('roomCreated', roomCode); // Send the room code back to the creator
-        console.log(`[${new Date().toISOString()}] Room created: ${roomCode}`, rooms); // Log the rooms object
-
-        // Schedule room deletion after 5 minutes
-        setTimeout(() => {
-            if (rooms[roomCode] && rooms[roomCode].players.length === 0) {
-                delete rooms[roomCode];
-                console.log(`[${new Date().toISOString()}] Room deleted after 5 minutes: ${roomCode}`);
-            }
-        }, 5 * 60 * 1000); // 5 minutes in milliseconds
-    });
-
-    // Handle joining a room
-    socket.on('joinRoom', ({ roomCode, playerName, selectedCharacter }) => {
-        if (rooms[roomCode]) {
-            // Check if the player is already in the room
-            const isPlayerInRoom = rooms[roomCode].players.some(player => player.id === socket.id);
-            if (isPlayerInRoom) {
-                socket.emit('roomJoined', roomCode); // Notify the player that they are already in the room
-                console.log(`[${new Date().toISOString()}] User ${socket.id} is already in room: ${roomCode}`);
-                return;
-            }
-
-            // Check if the room is full
-            if (rooms[roomCode].players.length >= 10) {
-                socket.emit('roomError', 'Room is full. Cannot join.');
-                console.log(`[${new Date().toISOString()}] Room is full: ${roomCode}`);
-                return;
-            }
-
-            // Add the player to the room
-            const player = { id: socket.id, name: playerName, character: selectedCharacter };
-            rooms[roomCode].players.push(player);
-            socket.join(roomCode);
-
-            // Notify the player that they joined successfully
-            socket.emit('roomJoined', roomCode);
-
-            // Broadcast the updated player list
-            broadcastPlayerList(roomCode);
-
-            console.log(`[${new Date().toISOString()}] User ${socket.id} joined room: ${roomCode}`);
-        } else {
-            socket.emit('roomError', 'Room does not exist.');
-            console.log(`[${new Date().toISOString()}] Failed join attempt for room: ${roomCode}`);
-        }
-    });
-
-    // Handle word selection for a room
-    socket.on('requestWord', (roomCode) => {
-        if (rooms[roomCode]) {
-            const selectedWord = getRandomWord();
-            rooms[roomCode].currentWord = selectedWord; // Store the word for the room
-            io.to(roomCode).emit('wordSelected', selectedWord); // Broadcast the word to all players in the room
-        }
-    });
-
-    // Handle fetching the player list for the leaderboard
-    socket.on('getPlayerList', (roomCode) => {
-        if (rooms[roomCode]) {
-            const players = rooms[roomCode].players.map(player => ({
-                name: player.name,
-                character: player.character,
-            }));
-            socket.emit('updatePlayerList', players); // Send the player list to the client
-        } else {
-            socket.emit('roomError', 'Room does not exist.');
-        }
-    });
-
-    // Handle disconnection
-    socket.on('disconnect', () => {
-        for (const roomCode in rooms) {
-            const index = rooms[roomCode].players.findIndex(player => player.id === socket.id);
-            if (index !== -1) {
-                const [removedPlayer] = rooms[roomCode].players.splice(index, 1);
-                console.log(`[${new Date().toISOString()}] Player left room ${roomCode}:`, removedPlayer);
-
-                // Broadcast the updated player list
-                broadcastPlayerList(roomCode);
-
-                // If the room is empty, log it (but don't delete it immediately)
-                if (rooms[roomCode].players.length === 0) {
-                    console.log(`[${new Date().toISOString()}] Room is now empty: ${roomCode}`);
-                }
-                break;
-            }
-        }
-    });
-});
-
-// Generate a random room code
-function generateRoomCode() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let roomCode;
-    do {
-        roomCode = '';
-        for (let i = 0; i < 6; i++) {
-            roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-    } while (rooms[roomCode]); // Ensure the room code is unique
-    return roomCode;
-}
-
-// Validate room code
-app.get('/validate-room/:roomCode', (req, res) => {
-    const roomCode = req.params.roomCode;
-    if (rooms[roomCode]) {
-        res.json({ valid: true });
-    } else {
-        res.json({ valid: false });
-    }
-});
-
-// Create a room for solo play
-app.get('/create-room', (req, res) => {
-    const roomCode = generateRoomCode();
-    rooms[roomCode] = { players: [], createdAt: Date.now() }; // Initialize the room
-    console.log(`[${new Date().toISOString()}] Room created: ${roomCode}`);
-    res.json({ roomCode });
-});
-
-// Broadcast the updated player list to all players in the room
-function broadcastPlayerList(roomCode) {
-    if (rooms[roomCode]) {
-        const players = rooms[roomCode].players.map(player => ({
-            name: player.name,
-            character: player.character,
-        }));
-        io.to(roomCode).emit('updatePlayerList', players);
-    }
-}
-
-// List of words for the game
-const words = [
-    "Car", "House", "Tree", "Dog", "Cat", "Sun", "Moon", "Star", "Boat", "Fish",
-    "Bird", "Flower", "Mountain", "River", "Chair", "Table", "Laptop", "Phone", "Book", "Clock"
+const WORDS = [
+    "airplane", "alarm clock", "backpack", "basketball", "bicycle",
+    "butterfly", "cake", "castle", "elephant", "flower",
+    "guitar", "laptop", "pineapple", "pizza", "scissors",
+    "snowflake", "strawberry", "tree", "watermelon", "wristwatch"
 ];
 
-// Function to randomly select a word
-function getRandomWord() {
-    const randomIndex = Math.floor(Math.random() * words.length);
-    return words[randomIndex];
+const TOTAL_ROUNDS = 3;
+const ROUND_DURATION = 60; // seconds
+
+// ─── Static files ─────────────────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Validate a room code
+app.get('/validate-room/:roomCode', (req, res) => {
+    const { roomCode } = req.params;
+    if (rooms[roomCode] && !rooms[roomCode].gameStarted) {
+        res.json({ valid: true });
+    } else if (rooms[roomCode] && rooms[roomCode].gameStarted) {
+        res.json({ valid: false, reason: 'Game already in progress.' });
+    } else {
+        res.json({ valid: false, reason: 'Room does not exist.' });
+    }
+});
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function generateRoomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code;
+    do {
+        code = Array.from({ length: 6 }, () =>
+            chars[Math.floor(Math.random() * chars.length)]
+        ).join('');
+    } while (rooms[code]);
+    return code;
 }
 
-// Start the server
+function createRoom(hostId) {
+    return {
+        players: [],
+        scores: {},          // cumulative scores
+        roundScores: {},     // scores for current round
+        currentWord: null,
+        round: 0,
+        gameStarted: false,
+        hostId,
+        roundTimer: null,
+        wordsUsed: []
+    };
+}
+
+function getRandomWord(used = []) {
+    const available = WORDS.filter(w => !used.includes(w));
+    const pool = available.length > 0 ? available : WORDS;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function broadcastPlayerList(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+    const players = room.players.map(p => ({
+        id: p.id,
+        name: p.name,
+        character: p.character,
+        score: room.scores[p.id] || 0,
+        isHost: p.id === room.hostId
+    }));
+    io.to(roomCode).emit('updatePlayerList', players);
+}
+
+// ─── Socket.IO ────────────────────────────────────────────────────────────────
+io.on('connection', (socket) => {
+    console.log(`[CONNECT] ${socket.id}`);
+
+    // Create a new room (called from room.html)
+    socket.on('createRoom', ({ playerName, selectedCharacter }) => {
+        const roomCode = generateRoomCode();
+        rooms[roomCode] = createRoom(socket.id);
+
+        const player = { id: socket.id, name: playerName, character: selectedCharacter };
+        rooms[roomCode].players.push(player);
+        rooms[roomCode].scores[socket.id] = 0;
+
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
+
+        socket.emit('roomCreated', roomCode);
+        broadcastPlayerList(roomCode);
+        console.log(`[ROOM] ${roomCode} created by ${playerName}`);
+    });
+
+    // Join existing room (called from room.html)
+    socket.on('joinRoom', ({ roomCode, playerName, selectedCharacter }) => {
+        const room = rooms[roomCode];
+        if (!room) { socket.emit('roomError', 'Room does not exist.'); return; }
+        if (room.gameStarted) { socket.emit('roomError', 'Game already in progress.'); return; }
+        if (room.players.length >= 10) { socket.emit('roomError', 'Room is full.'); return; }
+
+        const alreadyIn = room.players.find(p => p.id === socket.id);
+        if (!alreadyIn) {
+            const player = { id: socket.id, name: playerName, character: selectedCharacter };
+            room.players.push(player);
+            room.scores[socket.id] = 0;
+        }
+
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
+        socket.emit('roomJoined', roomCode);
+        broadcastPlayerList(roomCode);
+        console.log(`[ROOM] ${playerName} joined ${roomCode}`);
+    });
+
+    // Re-join room after redirect to game.html
+    socket.on('joinGame', ({ roomCode, playerName, selectedCharacter }) => {
+        const room = rooms[roomCode];
+        if (!room) { socket.emit('roomError', 'Room not found.'); return; }
+
+        // Re-register socket in the room
+        const existing = room.players.find(p => p.name === playerName);
+        if (existing) {
+            existing.id = socket.id; // update socket id after page reload
+            room.scores[socket.id] = room.scores[existing.id] || 0;
+        } else {
+            const player = { id: socket.id, name: playerName, character: selectedCharacter };
+            room.players.push(player);
+            room.scores[socket.id] = 0;
+        }
+
+        socket.join(roomCode);
+        socket.roomCode = roomCode;
+        broadcastPlayerList(roomCode);
+        socket.emit('joinedGame', { hostId: room.hostId });
+    });
+
+    // Host starts the game
+    socket.on('startGame', (roomCode) => {
+        const room = rooms[roomCode];
+        if (!room) return;
+        if (socket.id !== room.hostId) {
+            socket.emit('roomError', 'Only the host can start the game.');
+            return;
+        }
+        room.gameStarted = true;
+        io.to(roomCode).emit('gameStarting', roomCode); // tell all clients to go to game.html
+    });
+
+    // Relay drawing strokes to all OTHER players in the room
+    socket.on('drawingData', ({ roomCode, strokeData }) => {
+        socket.to(roomCode).emit('remoteDrawingData', {
+            playerId: socket.id,
+            strokeData
+        });
+    });
+
+    // Player submits their score after TF.js evaluation
+    socket.on('submitScore', ({ roomCode, score }) => {
+        const room = rooms[roomCode];
+        if (!room) return;
+
+        if (room.roundScores[socket.id] === undefined) {
+            room.roundScores[socket.id] = score;
+            room.scores[socket.id] = (room.scores[socket.id] || 0) + score;
+        }
+
+        const allSubmitted = room.players.every(p => room.roundScores[p.id] !== undefined);
+        if (allSubmitted) {
+            clearTimeout(room.roundTimer);
+            endRound(roomCode);
+        }
+    });
+
+    // Disconnect
+    socket.on('disconnect', () => {
+        const roomCode = socket.roomCode;
+        if (!roomCode || !rooms[roomCode]) return;
+
+        const room = rooms[roomCode];
+        const idx = room.players.findIndex(p => p.id === socket.id);
+        if (idx !== -1) {
+            const [removed] = room.players.splice(idx, 1);
+            delete room.scores[socket.id];
+            console.log(`[LEAVE] ${removed.name} left ${roomCode}`);
+
+            if (room.players.length === 0) {
+                clearTimeout(room.roundTimer);
+                delete rooms[roomCode];
+                console.log(`[ROOM] ${roomCode} deleted (empty)`);
+            } else {
+                if (socket.id === room.hostId) {
+                    room.hostId = room.players[0].id;
+                    io.to(room.hostId).emit('youAreHost');
+                }
+                broadcastPlayerList(roomCode);
+            }
+        }
+        console.log(`[DISCONNECT] ${socket.id}`);
+    });
+});
+
+// ─── Game Flow ────────────────────────────────────────────────────────────────
+function startNextRound(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    room.round++;
+    room.roundScores = {};
+
+    if (room.round > TOTAL_ROUNDS) {
+        endGame(roomCode);
+        return;
+    }
+
+    const word = getRandomWord(room.wordsUsed);
+    room.currentWord = word;
+    room.wordsUsed.push(word);
+
+    io.to(roomCode).emit('roundStart', {
+        round: room.round,
+        totalRounds: TOTAL_ROUNDS,
+        word,
+        duration: ROUND_DURATION
+    });
+
+    console.log(`[ROUND] ${roomCode} — Round ${room.round}: "${word}"`);
+
+    // Force-end round after time + 5s buffer
+    room.roundTimer = setTimeout(() => {
+        room.players.forEach(p => {
+            if (room.roundScores[p.id] === undefined) {
+                room.roundScores[p.id] = 0;
+            }
+        });
+        endRound(roomCode);
+    }, (ROUND_DURATION + 5) * 1000);
+}
+
+function endRound(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    const results = room.players
+        .map(p => ({
+            id: p.id,
+            name: p.name,
+            character: p.character,
+            roundScore: room.roundScores[p.id] || 0,
+            totalScore: room.scores[p.id] || 0
+        }))
+        .sort((a, b) => b.totalScore - a.totalScore);
+
+    io.to(roomCode).emit('roundEnd', {
+        round: room.round,
+        totalRounds: TOTAL_ROUNDS,
+        word: room.currentWord,
+        results
+    });
+
+    console.log(`[ROUND END] ${roomCode} — Round ${room.round} done`);
+
+    // Start next round after 6 seconds
+    setTimeout(() => startNextRound(roomCode), 6000);
+}
+
+function endGame(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    const results = room.players
+        .map(p => ({
+            id: p.id,
+            name: p.name,
+            character: p.character,
+            totalScore: room.scores[p.id] || 0
+        }))
+        .sort((a, b) => b.totalScore - a.totalScore);
+
+    io.to(roomCode).emit('gameOver', { results });
+    console.log(`[GAME OVER] ${roomCode}`);
+
+    // Cleanup after 30s
+    setTimeout(() => { delete rooms[roomCode]; }, 30000);
+}
+
+// ─── Start ────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`🎨 ArtArena running at http://localhost:${PORT}`);
 });

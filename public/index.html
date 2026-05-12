@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtArena — Draw, Compete, Win!</title>
+    <meta name="description" content="ArtArena is a multiplayer drawing game where AI judges your artwork. Draw fast, draw well, beat your friends!">
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="icon" type="image/png" href="images/logo2.png">
+</head>
+<body>
+    <div class="landing-page">
+        <div class="doodle-container">
+            <img src="images/doodle1.png" alt="Doodle" class="doodle doodle1">
+        </div>
+
+        <div class="container">
+            <h1>
+                <span class="wobbly-text">A</span><span class="wobbly-text">r</span>
+                <span class="wobbly-text">t</span><span class="wobbly-text">A</span>
+                <span class="wobbly-text">r</span><span class="wobbly-text">e</span>
+                <span class="wobbly-text">n</span><span class="wobbly-text">a</span>
+                <span class="wobbly-text">🎨</span>
+            </h1>
+
+            <input type="text" placeholder="Enter Your Name" class="namebox" id="playerName" maxlength="20">
+
+            <button class="character-toggle">CHOOSE YOUR PLAYER ➡️</button>
+
+            <div class="character-selection">
+                <button class="char-btn" id="prevCharacter">◀</button>
+                <img id="characterImage" src="images/character1.png" alt="Character">
+                <button class="char-btn" id="nextCharacter">▶</button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="play" id="playButton" disabled>⚡ SOLO PLAY</button>
+                <button class="room" id="roomButton" disabled>👥 MULTIPLAYER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-info">
+        <div class="about-section">
+            <section class="about">
+                <h2>About</h2>
+                <p><strong>ArtArena</strong> is a fun multiplayer drawing and AI-powered recognition game.</p>
+                <p>Each round, all players draw the same word — an AI model scores each drawing for accuracy.</p>
+                <p>The most accurate artist wins the round. Best cumulative score wins the game!</p>
+            </section>
+
+            <section class="how-to-play">
+                <h2>How to Play</h2>
+                <ol>
+                    <li>Enter your name and pick a character</li>
+                    <li>Play solo or create/join a multiplayer room</li>
+                    <li>Draw the given word within 60 seconds</li>
+                    <li>AI scores your drawing — accuracy + effort</li>
+                    <li>After 3 rounds, the leaderboard reveals the winner!</li>
+                </ol>
+            </section>
+        </div>
+
+        <div class="footer">
+            <footer>
+                <button onclick="window.location.href='contact.html'">Contact</button>
+                <button onclick="window.location.href='terms.html'">Terms of Service</button>
+                <button onclick="window.location.href='privacy.html'">Privacy</button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="js/landing.js"></script>
+</body>
+</html>

@@ -1,64 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArtArena - Game Room</title>
-    <link rel="stylesheet" href="game.css">
-    
+    <title>ArtArena — Game Room</title>
+    <link rel="stylesheet" href="css/game.css">
+    <link rel="icon" type="image/png" href="images/logo2.png">
 </head>
-
 <body>
-    <div class="doodle-container">
-        <img src="images/doodle1.png" alt="Doodle 1" class="doodle doodle1">
+    <!-- Round Result Overlay -->
+    <div class="overlay" id="round-overlay">
+        <div class="overlay-card" id="overlay-content"></div>
     </div>
-    <div class="game-container">
-        <header>
-            <div class="logo-container">
-                <h1 class="artarena-logo">
-                    <div class="wobbly-text-container">
-                        <span class="wobbly-text">A</span> <span class="wobbly-text">r</span>
-                        <span class="wobbly-text">t</span>
-                        <span class="wobbly-text">A</span>
-                        <span class="wobbly-text">r</span>
-                        <span class="wobbly-text">e</span>
-                        <span class="wobbly-text">n</span>
-                        <span class="wobbly-text">a</span>
-                    </div>
-                    <img src="images/paintpalette.png" alt="Palette" class="palette-icon">
-                </h1>
-            </div>
-        </header>
 
-        <div class="game-content">
-            <div class="left-panel">
-                <h3>Leaderboard</h3>
-                <ul></ul>
-            </div>
+    <div class="game-wrapper">
 
-            <div class="main-game">
-                <div class="top-bar">
-                    <div class="timer" id="timer">⏳ 60s</div>
-                    <div class="word">Draw this: <b id="draw-word"></b></div>
-                    <div class="settings">⚙</div>
-                </div>
-                <div class="drawing-area">
-                    <canvas id="canvas"></canvas>
-                </div>
-                <div class="tools">
-                    <button class="pencilBtn">✏️</button>
-                    <button class="eraserBtn">🧽</button>
-                    <button class="eraseAllBtn">Vanish</button>
-                </div>
-            </div>
-
+        <!-- Left: Live Scoreboard -->
+        <div class="left-panel">
+            <h3>🏅 Scores</h3>
+            <ul id="scoreboard"></ul>
         </div>
+
+        <!-- Center: Main Game -->
+        <div class="main-game">
+            <header class="game-header">
+                <div class="header-meta">
+                    <div class="timer" id="timer">⏳ 60s</div>
+                    <div class="word-prompt">Draw: <b id="draw-word">Waiting...</b></div>
+                    <div class="round-badge" id="round-info">Round — / —</div>
+                </div>
+            </header>
+
+            <div class="drawing-area">
+                <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="tools">
+                <button class="tool-btn pencilBtn active" title="Pencil">✏️ Pencil</button>
+                <button class="tool-btn eraserBtn" title="Eraser">🧽 Eraser</button>
+                <button class="tool-btn eraseAllBtn" title="Clear canvas">🗑️ Clear</button>
+            </div>
+        </div>
+
+        <!-- Right: Other Players Drawing Live -->
+        <div class="right-panel">
+            <h3>👀 Others Drawing</h3>
+            <div id="mini-canvases"></div>
+        </div>
+
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
-    <script src="game.js"></script>
+    <script src="js/game.js"></script>
 </body>
-
 </html>

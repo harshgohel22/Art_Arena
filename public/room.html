@@ -1,57 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArtArena - Create or Join Room</title>
-    <link rel="stylesheet" href="room.css">
+    <title>ArtArena — Create or Join Room</title>
+    <link rel="stylesheet" href="css/room.css">
+    <link rel="icon" type="image/png" href="images/logo2.png">
 </head>
-
 <body>
-    <div class="game-container">
+    <div class="room-page">
         <header>
-            <div class="logo-container">
+            <a href="index.html" class="logo-link">
                 <h1 class="artarena-logo">
-                    <span>A</span><span>r</span><span>t</span><span>A</span><span>r</span><span>e</span><span>n</span><span>a</span>
+                    <span>A</span><span>r</span><span>t</span>
+                    <span>A</span><span>r</span><span>e</span><span>n</span><span>a</span>
                     <img src="images/paintpalette.png" alt="Palette" class="palette-icon">
                 </h1>
-            </div>
+            </a>
         </header>
 
-        <div class="game-content">
-            <!-- Main Section -->
-            <div class="main-game">
-                <div class="top-bar">
-                    <h2>Welcome to ArtArena !!!</h2>
-                    <p>Create a new room or join an existing one to start drawing!</p>
+        <div class="room-content">
+            <!-- Create Room -->
+            <div class="room-card create-card">
+                <h2>Create a Room</h2>
+                <p>Start a new game and invite friends with your room code.</p>
+                <button id="createRoomBtn" class="btn-primary">➕ Create Room</button>
+
+                <div id="roomCodeDisplay" style="display:none;" class="room-code-box">
+                    <p>Share this code with friends:</p>
+                    <div class="code-display">
+                        <span id="roomCode"></span>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('roomCode').textContent)" class="copy-btn">📋 Copy</button>
+                    </div>
+                    <span id="hostBadge" class="host-badge" style="display:none;">👑 You are the Host</span>
                 </div>
-                <div class="button-group">
-                    <button id="createRoomBtn">Create Room</button>
-                    <p id="roomCodeDisplay" style="display: none; margin-top: 10px;">Room Code: <span
-                            id="roomCode"></span></p>
-                </div>
+
+                <button id="startGameBtn" class="btn-start" style="display:none;">🚀 Start Game</button>
             </div>
 
-            <!-- Left Panel: Join Room -->
-            <div class="left-panel">
-                <h3>Join a Room...</h3>
-                <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
-                <button id="joinRoomBtn">Join Room</button>
-                <p id="joinStatus"></p>
+            <!-- Join Room -->
+            <div class="room-card join-card">
+                <h2>Join a Room</h2>
+                <p>Enter a 6-character room code to join a friend's game.</p>
+                <div class="join-input-group">
+                    <input type="text" id="roomCodeInput" placeholder="Enter Room Code" maxlength="6">
+                    <button id="joinRoomBtn" class="btn-primary">🚪 Join</button>
+                </div>
+                <p id="joinStatus" class="join-status"></p>
             </div>
 
-            <!-- Right Panel: Game Info -->
-            <div class="right-panel">
-                <h3>Game Info</h3>
-                <p>In ArtArena, players join rooms and compete by drawing random words while AI will score them based on
-                    their drawing. The more accurate and creative the drawing, the higher the score!</p>
+            <!-- Players in Room -->
+            <div class="room-card players-card">
+                <h2>Players in Room</h2>
+                <p id="playerCount">0 players in room</p>
+                <ul id="playerList"></ul>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="room.js"></script>
+    <script src="js/room.js"></script>
 </body>
-
 </html>

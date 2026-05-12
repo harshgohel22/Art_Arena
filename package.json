@@ -1,6 +1,13 @@
 {
+  "name": "artarena",
+  "version": "1.0.0",
+  "description": "Multiplayer AI-powered drawing game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
     "express": "^4.21.2",
     "socket.io": "^4.8.1"
   }

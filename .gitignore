@@ -1,13 +1,28 @@
+# Python virtual environments
 bin/
-ArtArena.ipynb
 include/
 lib/
-numpy_practice.py
-pyvenv.cfg
 share/
-node_modules/
+pyvenv.cfg
 tfenv/
-GoogleDraw_dataset/
-ai/verify_model.py
-.DS_Store
+*.egg-info/
 __pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# Datasets (too large for git)
+GoogleDraw_dataset/
+*.npy
+
+# Jupyter
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
