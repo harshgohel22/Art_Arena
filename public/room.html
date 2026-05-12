@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtArena - Create or Join Room</title>
+    <link rel="stylesheet" href="room.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <header>
+            <div class="logo-container">
+                <h1 class="artarena-logo">
+                    <span>A</span><span>r</span><span>t</span><span>A</span><span>r</span><span>e</span><span>n</span><span>a</span>
+                    <img src="images/paintpalette.png" alt="Palette" class="palette-icon">
+                </h1>
+            </div>
+        </header>
+
+        <div class="game-content">
+            <!-- Main Section -->
+            <div class="main-game">
+                <div class="top-bar">
+                    <h2>Welcome to ArtArena !!!</h2>
+                    <p>Create a new room or join an existing one to start drawing!</p>
+                </div>
+                <div class="button-group">
+                    <button id="createRoomBtn">Create Room</button>
+                    <p id="roomCodeDisplay" style="display: none; margin-top: 10px;">Room Code: <span
+                            id="roomCode"></span></p>
+                </div>
+            </div>
+
+            <!-- Left Panel: Join Room -->
+            <div class="left-panel">
+                <h3>Join a Room...</h3>
+                <input type="text" id="roomCodeInput" placeholder="Enter Room Code">
+                <button id="joinRoomBtn">Join Room</button>
+                <p id="joinStatus"></p>
+            </div>
+
+            <!-- Right Panel: Game Info -->
+            <div class="right-panel">
+                <h3>Game Info</h3>
+                <p>In ArtArena, players join rooms and compete by drawing random words while AI will score them based on
+                    their drawing. The more accurate and creative the drawing, the higher the score!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="room.js"></script>
+</body>
+
+</html>

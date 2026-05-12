@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtArena - Game Room</title>
+    <link rel="stylesheet" href="game.css">
+    
+</head>
+
+<body>
+    <div class="doodle-container">
+        <img src="images/doodle1.png" alt="Doodle 1" class="doodle doodle1">
+    </div>
+    <div class="game-container">
+        <header>
+            <div class="logo-container">
+                <h1 class="artarena-logo">
+                    <div class="wobbly-text-container">
+                        <span class="wobbly-text">A</span> <span class="wobbly-text">r</span>
+                        <span class="wobbly-text">t</span>
+                        <span class="wobbly-text">A</span>
+                        <span class="wobbly-text">r</span>
+                        <span class="wobbly-text">e</span>
+                        <span class="wobbly-text">n</span>
+                        <span class="wobbly-text">a</span>
+                    </div>
+                    <img src="images/paintpalette.png" alt="Palette" class="palette-icon">
+                </h1>
+            </div>
+        </header>
+
+        <div class="game-content">
+            <div class="left-panel">
+                <h3>Leaderboard</h3>
+                <ul></ul>
+            </div>
+
+            <div class="main-game">
+                <div class="top-bar">
+                    <div class="timer" id="timer">⏳ 60s</div>
+                    <div class="word">Draw this: <b id="draw-word"></b></div>
+                    <div class="settings">⚙</div>
+                </div>
+                <div class="drawing-area">
+                    <canvas id="canvas"></canvas>
+                </div>
+                <div class="tools">
+                    <button class="pencilBtn">✏️</button>
+                    <button class="eraserBtn">🧽</button>
+                    <button class="eraseAllBtn">Vanish</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
+    <script src="game.js"></script>
+</body>
+
+</html>

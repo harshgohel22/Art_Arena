@@ -1,0 +1,309 @@
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom, #0b1736, #041024);
+    color: white;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 1200px;
+    height: 90vh;
+    background-color: hsl(219, 64%, 18%, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.artarena-logo {
+    font-family: 'Fredoka One', cursive;
+    font-size: 50px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    letter-spacing: 0px;
+}
+
+.artarena-logo span {
+    display: inline-block;
+    animation: bounce 1.5s infinite alternate ease-in-out;
+    margin: 0;
+    padding: 0;
+
+}
+
+.palette-icon {
+    width: 50px;
+    height: 50px;
+    margin-left: 10px;
+    animation: rotate 3s infinite linear;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0px);
+    }
+
+    to {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.game-content {
+    display: flex;
+    height: 85%;
+    gap: 10px;
+}
+
+.left-panel {
+    width: 20%;
+    background-color: #2b3b5a;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    overflow-y: auto;
+    height: 76.5%;
+}
+
+.left-panel h3 {
+    margin-bottom: 10px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.left-panel ul {
+    list-style: none;
+    padding: 0;
+}
+
+.left-panel li {
+    display: flex;
+    align-items: center;
+    background-color: #3c506f;
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 5px;
+    color: white;
+    font-size: 14px;
+    gap: 8px;
+    box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.3);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUpFadeIn 0.8s ease-in-out forwards;
+}
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.main-game {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.top-bar {
+    width: 98%;
+    background-color: white;
+    color: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.timer {
+    font-size: 18px;
+}
+
+.word {
+    font-size: 20px;
+    font-weight: bold;
+    width: fit-content;
+}
+
+.settings {
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.drawing-area {
+    background-color: white;
+    width: 100%;
+    height: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+canvas {
+    width: 90%;
+    height: 90%;
+    border: 2px solid black;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+.wobbly-text {
+    display: inline-block;
+    font-size: 38px;
+    font-weight: 600;
+    animation: wobble 1.5s infinite ease-in-out;
+    letter-spacing: 0px;
+    margin: 0;
+    padding: 0;
+}
+
+.wobbly-text:nth-child(1) {
+    color: #FF4C4C;
+    animation-delay: 0s;
+}
+
+.wobbly-text:nth-child(2) {
+    color: #FFA500;
+    animation-delay: 0.075s;
+}
+
+.wobbly-text:nth-child(3) {
+    color: #FFD700;
+    animation-delay: 0.15s;
+}
+
+.wobbly-text:nth-child(4) {
+    color: #32CD32;
+    animation-delay: 0.225s;
+}
+
+.wobbly-text:nth-child(5) {
+    color: #1E90FF;
+    animation-delay: 0.3s;
+}
+
+.wobbly-text:nth-child(6) {
+    color: #8A2BE2;
+    animation-delay: 0.375s;
+}
+
+.wobbly-text:nth-child(7) {
+    color: #FF69B4;
+    animation-delay: 0.45s;
+}
+
+.wobbly-text:nth-child(8) {
+    color: #00FFFF;
+    animation-delay: 0.525s;
+}
+
+.wobbly-text:nth-child(9) {
+    animation-delay: 0.6s;
+}
+
+.tools {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tools button {
+    background-color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.3s;
+}
+
+.tools button:hover {
+    background-color: lightgray;
+}
+
+.fullscreen-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.doodle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.doodle {
+    position: absolute;
+    width: 100px;
+    height: auto;
+    opacity: 0.8;
+}
+
+.doodle1 {
+    width: 100%;
+    height: 100%;
+    opacity: 0.3;
+}
