@@ -6,9 +6,9 @@ const characters = [
 ];
 
 let currentIndex = 0;
-const characterImage = document.getElementById('characterImage');
-const playButton = document.getElementById('playButton');
-const roomButton = document.getElementById('roomButton');
+const characterImage  = document.getElementById('characterImage');
+const playButton      = document.getElementById('playButton');
+const roomButton      = document.getElementById('roomButton');
 const playerNameInput = document.getElementById('playerName');
 
 // Character navigation
@@ -32,17 +32,12 @@ function checkEnableButtons() {
     roomButton.disabled = !ready;
 }
 
-// Solo play
+// Solo play — go straight to game, room is created via socket on arrival
 playButton.addEventListener('click', () => {
     const name = playerNameInput.value.trim();
     if (!name) { alert('Please enter your name.'); return; }
     savePlayer(name);
-
-    fetch('/create-room')
-        .then(r => r.json())
-        .then(data => {
-            window.location.href = `game.html?roomCode=${data.roomCode}`;
-        });
+    window.location.href = 'game.html?solo=true';
 });
 
 // Multiplayer room

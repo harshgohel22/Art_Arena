@@ -99,6 +99,15 @@ function broadcastPlayerList(roomCode) {
 io.on('connection', (socket) => {
     console.log(`[CONNECT] ${socket.id}`);
 
+    // ── Create solo room via socket (called from game.html?solo=true) ──────────
+    socket.on('createSoloRoom', () => {
+        const roomCode = generateRoomCode();
+        rooms[roomCode] = createRoom(socket.id);
+        rooms[roomCode].solo = true;
+        console.log(`[SOLO] Room ${roomCode} created for socket ${socket.id}`);
+        socket.emit('soloRoomCreated', roomCode);
+    });
+
     // ── Create room (multiplayer lobby) ───────────────────────────────────────
     socket.on('createRoom', ({ playerName, selectedCharacter }) => {
         const roomCode = generateRoomCode();
