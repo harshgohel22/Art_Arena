@@ -26,7 +26,18 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Validate a room code
+// ─── REST: Create a solo room ─────────────────────────────────────────────────
+// Called by landing.js when the player clicks "Solo Play".
+// Creates a room, marks it as solo so joinGame auto-starts it.
+app.get('/create-room', (req, res) => {
+    const roomCode = generateRoomCode();
+    rooms[roomCode] = createRoom(null); // hostId set later when socket connects
+    rooms[roomCode].solo = true;        // flag: auto-start on first joinGame
+    console.log(`[ROOM] Solo room ${roomCode} pre-created`);
+    res.json({ roomCode });
+});
+
+// ─── REST: Validate room code ─────────────────────────────────────────────────
 app.get('/validate-room/:roomCode', (req, res) => {
     const { roomCode } = req.params;
     if (rooms[roomCode] && !rooms[roomCode].gameStarted) {
@@ -53,14 +64,15 @@ function generateRoomCode() {
 function createRoom(hostId) {
     return {
         players: [],
-        scores: {},          // cumulative scores
-        roundScores: {},     // scores for current round
+        scores: {},
+        roundScores: {},
         currentWord: null,
         round: 0,
         gameStarted: false,
         hostId,
         roundTimer: null,
-        wordsUsed: []
+        wordsUsed: [],
+        solo: false
     };
 }
 
@@ -87,7 +99,7 @@ function broadcastPlayerList(roomCode) {
 io.on('connection', (socket) => {
     console.log(`[CONNECT] ${socket.id}`);
 
-    // Create a new room (called from room.html)
+    // ── Create room (multiplayer lobby) ───────────────────────────────────────
     socket.on('createRoom', ({ playerName, selectedCharacter }) => {
         const roomCode = generateRoomCode();
         rooms[roomCode] = createRoom(socket.id);
@@ -104,7 +116,7 @@ io.on('connection', (socket) => {
         console.log(`[ROOM] ${roomCode} created by ${playerName}`);
     });
 
-    // Join existing room (called from room.html)
+    // ── Join existing room (multiplayer lobby) ────────────────────────────────
     socket.on('joinRoom', ({ roomCode, playerName, selectedCharacter }) => {
         const room = rooms[roomCode];
         if (!room) { socket.emit('roomError', 'Room does not exist.'); return; }
@@ -125,16 +137,21 @@ io.on('connection', (socket) => {
         console.log(`[ROOM] ${playerName} joined ${roomCode}`);
     });
 
-    // Re-join room after redirect to game.html
+    // ── Join game room (called from game.html on load) ────────────────────────
     socket.on('joinGame', ({ roomCode, playerName, selectedCharacter }) => {
         const room = rooms[roomCode];
         if (!room) { socket.emit('roomError', 'Room not found.'); return; }
 
-        // Re-register socket in the room
+        // Re-register / update socket id after page navigation
         const existing = room.players.find(p => p.name === playerName);
         if (existing) {
-            existing.id = socket.id; // update socket id after page reload
-            room.scores[socket.id] = room.scores[existing.id] || 0;
+            const oldId = existing.id;
+            existing.id = socket.id;
+            // Carry over cumulative score under new socket id
+            room.scores[socket.id] = room.scores[oldId] || 0;
+            if (oldId !== socket.id) delete room.scores[oldId];
+            // If this player was the host, update hostId too
+            if (room.hostId === oldId) room.hostId = socket.id;
         } else {
             const player = { id: socket.id, name: playerName, character: selectedCharacter };
             room.players.push(player);
@@ -145,9 +162,21 @@ io.on('connection', (socket) => {
         socket.roomCode = roomCode;
         broadcastPlayerList(roomCode);
         socket.emit('joinedGame', { hostId: room.hostId });
+
+        // ── Solo auto-start ───────────────────────────────────────────────────
+        // For solo rooms, set the host to this socket and start immediately.
+        // We wait 1.5 s to give the client time to finish loading the TF model.
+        if (room.solo && !room.gameStarted) {
+            room.hostId = socket.id;
+            room.gameStarted = true;
+            console.log(`[SOLO] Auto-starting room ${roomCode} for ${playerName}`);
+            setTimeout(() => {
+                if (rooms[roomCode]) startNextRound(roomCode);
+            }, 1500);
+        }
     });
 
-    // Host starts the game
+    // ── Host starts multiplayer game ──────────────────────────────────────────
     socket.on('startGame', (roomCode) => {
         const room = rooms[roomCode];
         if (!room) return;
@@ -156,10 +185,15 @@ io.on('connection', (socket) => {
             return;
         }
         room.gameStarted = true;
-        io.to(roomCode).emit('gameStarting', roomCode); // tell all clients to go to game.html
+        io.to(roomCode).emit('gameStarting', roomCode);
+
+        // Wait 4 s for all clients to load game.html, then start round 1
+        setTimeout(() => {
+            if (rooms[roomCode]) startNextRound(roomCode);
+        }, 4000);
     });
 
-    // Relay drawing strokes to all OTHER players in the room
+    // ── Drawing relay ─────────────────────────────────────────────────────────
     socket.on('drawingData', ({ roomCode, strokeData }) => {
         socket.to(roomCode).emit('remoteDrawingData', {
             playerId: socket.id,
@@ -167,7 +201,7 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Player submits their score after TF.js evaluation
+    // ── Score submission ──────────────────────────────────────────────────────
     socket.on('submitScore', ({ roomCode, score }) => {
         const room = rooms[roomCode];
         if (!room) return;
@@ -175,16 +209,19 @@ io.on('connection', (socket) => {
         if (room.roundScores[socket.id] === undefined) {
             room.roundScores[socket.id] = score;
             room.scores[socket.id] = (room.scores[socket.id] || 0) + score;
+            console.log(`[SCORE] ${socket.id} scored ${score} in ${roomCode}`);
         }
 
-        const allSubmitted = room.players.every(p => room.roundScores[p.id] !== undefined);
+        const allSubmitted = room.players.every(
+            p => room.roundScores[p.id] !== undefined
+        );
         if (allSubmitted) {
             clearTimeout(room.roundTimer);
             endRound(roomCode);
         }
     });
 
-    // Disconnect
+    // ── Disconnect ────────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
         const roomCode = socket.roomCode;
         if (!roomCode || !rooms[roomCode]) return;
@@ -201,9 +238,21 @@ io.on('connection', (socket) => {
                 delete rooms[roomCode];
                 console.log(`[ROOM] ${roomCode} deleted (empty)`);
             } else {
+                // If host left, promote next player
                 if (socket.id === room.hostId) {
                     room.hostId = room.players[0].id;
                     io.to(room.hostId).emit('youAreHost');
+                }
+                // If a round is in progress, treat disconnected player as 0
+                if (room.gameStarted && room.roundScores[socket.id] === undefined) {
+                    room.roundScores[socket.id] = 0;
+                    const allSubmitted = room.players.every(
+                        p => room.roundScores[p.id] !== undefined
+                    );
+                    if (allSubmitted) {
+                        clearTimeout(room.roundTimer);
+                        endRound(roomCode);
+                    }
                 }
                 broadcastPlayerList(roomCode);
             }
@@ -238,11 +287,12 @@ function startNextRound(roomCode) {
 
     console.log(`[ROUND] ${roomCode} — Round ${room.round}: "${word}"`);
 
-    // Force-end round after time + 5s buffer
+    // Force-end round after time expires + 5 s buffer for late submissions
     room.roundTimer = setTimeout(() => {
         room.players.forEach(p => {
             if (room.roundScores[p.id] === undefined) {
                 room.roundScores[p.id] = 0;
+                room.scores[p.id] = room.scores[p.id] || 0; // don't add anything
             }
         });
         endRound(roomCode);
@@ -272,7 +322,6 @@ function endRound(roomCode) {
 
     console.log(`[ROUND END] ${roomCode} — Round ${room.round} done`);
 
-    // Start next round after 6 seconds
     setTimeout(() => startNextRound(roomCode), 6000);
 }
 
@@ -292,7 +341,6 @@ function endGame(roomCode) {
     io.to(roomCode).emit('gameOver', { results });
     console.log(`[GAME OVER] ${roomCode}`);
 
-    // Cleanup after 30s
     setTimeout(() => { delete rooms[roomCode]; }, 30000);
 }
 
