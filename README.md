@@ -1,7 +1,7 @@
 # Art-Arena 
 **Multiplayer AI-Powered Drawing Game**
 
-Art-Arena is a real-time multiplayer drawing and recognition game developed as a SEM2 IT project. Players compete to draw a specific word within a time limit, and a custom-trained AI model judges the accuracy of their artwork to determine the winner.
+Art-Arena is a real-time multiplayer drawing and recognition game . Players compete to draw a specific word within a time limit, and a custom-trained AI model judges the accuracy of their artwork to determine the winner.
 
 ---
 
